@@ -1,0 +1,298 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include "next.cpp"
+using namespace std;
+
+
+
+
+
+template<class Elem> class list{
+    
+    class iterator{
+    public:
+        Elem curr;
+        iterator * previous;
+        iterator * successor;
+    
+        iterator(const Elem & val, iterator* prev = nullptr, iterator* succ = nullptr): curr{val}, previous{prev}, successor{succ}{}
+      
+        iterator * create(const Elem & value){
+                 iterator *instance = new iterator(value);
+                  return instance;
+              }
+        
+        iterator * insert_after (iterator * p, iterator *insertee){
+                  if(p == nullptr) {return nullptr;}
+                  if(p->successor!= nullptr){
+                      insertee->successor = p->successor;
+                      p->successor->previous = insertee;
+                  }
+                  p->successor = insertee;
+                  insertee->previous = p;
+                  return insertee;
+              }
+        
+        iterator * insert_before(iterator* p, iterator *insertee){
+            if(p == nullptr) {return nullptr;}
+            if(p->previous){
+                insertee->previous = p->previous;
+                p->previous->successor = insertee;
+            }
+            insertee->successor = p;
+            p->previous = insertee;
+            return insertee;
+        }
+        
+        
+    };
+    Elem eraser (iterator * p){
+        if(p->previous && p->successor){
+            p->previous->successor = p->successor;
+            p->successor->previous = p->previous;
+        }
+        else{
+            if (p->previous) {
+                p->previous->successor = nullptr;
+            }
+            if(p->successor){
+                p->successor->previous = nullptr;
+            }
+        }
+        
+        p->previous = nullptr;
+        p->successor = nullptr;
+        
+        Elem v = p->curr;
+
+        
+        delete p;
+        return v;
+    }
+
+    iterator* instance;
+    int counter = 0;
+    
+    //iterator& operator++(){ instance = instance->successor; return instance; }
+    iterator& operator--(){instance = instance->previous; return instance;} // check which one
+    //list& operator*(){return instance->value;}
+        
+    bool& operator==(const list & b) const {return instance == b.instance ;}
+    bool& operator!=(const list &b) const {return instance != b.instance;}
+    
+    
+
+
+
+    iterator * end(){
+        while (instance->successor != nullptr) {
+            instance= instance->successor;
+        }
+        return instance;
+    };
+    
+    iterator* begin(){
+        while (instance->previous != nullptr) {
+            instance= instance->previous;
+        }
+        return instance;
+    };
+
+public:
+    
+    int size(){
+        return counter;
+    }
+    
+    Elem & front(){
+          instance = begin();
+          return instance->curr;
+      };
+      
+    Elem & back(){
+          instance = end();
+          return instance->curr;
+      };
+
+    
+    
+    void pushback(const Elem & v){
+        if (counter == 0) {
+            instance = instance->create(v);
+        counter++;
+            return;
+        }
+        instance = instance->insert_after(end(), instance->create(v));
+        counter++;
+    };
+    void push_front(const Elem& v){
+        if (counter == 0) {
+            instance = instance->create(v);
+            counter++;
+            return;
+        }
+        instance = instance->insert_before(begin(), instance->create(v));
+        counter++;
+    }
+    
+    Elem pop_back(){
+        instance = end();
+        instance = instance->previous;
+        Elem v = eraser(instance->successor);
+        return v;
+    }
+    Elem pop_front(){
+        instance = begin();
+        instance = instance->successor;
+        Elem v = eraser(instance->previous);
+        return v;
+    }
+    
+    void erase(const Elem & v){
+        instance = begin();
+        
+        if (instance->curr == v) {
+            if (instance->successor) {
+                instance = instance->successor;
+                eraser(instance->previous);
+            }
+        }
+        
+        while (instance->successor != nullptr) {
+            if (instance->successor == v) {
+                eraser(instance->successor);
+            }
+            instance++;
+        }
+    }
+    
+    void show_list(){
+        instance = begin();
+        for (iterator* p = instance; p != end() ; p++) {
+            cout << p->curr;
+        }
+    }
+  
+    Elem get(int i = 0){
+        instance = begin();
+        if(i > counter || i < 0) throw 1;
+        for (int v = 0; v != i; v++) {
+            instance = instance->successor;
+        }
+        return instance->curr;
+    }
+    
+};
+
+
+
+void tryout_list(){
+    try {
+        list<string> Element;
+        
+        
+        Element.pushback("a");
+        Element.pushback("b");
+        Element.pushback("c");
+        Element.push_front("g");
+        Element.show_list();
+      
+    
+    
+    
+    
+    } catch (int i) {
+        if (i == 1) cout << "\n the List instance is out of range\n";
+    }
+}
+
+
+template<class Iter1>  vector<Iter1> copay(Iter1 f1, Iter1 e1){
+    vector<Iter1> f2;
+    for (Iter1 &p = f1 ; p != e1; p++) {
+        f2.push_back(p);
+    }
+    return f2;
+}
+
+
+
+template <class T> class pvector{
+    int elemcount=0;
+    T *value = new T[elemcount];
+    
+public:
+
+    void detach(int x){
+        bool exist = false;
+        for (int i =0; i < elemcount-1; i++) {
+            if(i == x){
+                exist = true;
+            }
+            if (exist==true) {
+                value[i] = value[i+1];
+            }
+        }
+        if (exist==true){
+            elemcount--;
+            
+        }
+    }
+    
+    void pushback(const T & var){
+        value[elemcount] = var;
+        elemcount++;
+    }
+    
+    int size(){
+        return elemcount;
+    }
+    
+    void erase(){
+        delete[] value;
+        elemcount = 0;
+    }
+    
+    T get(const int i){
+        return value[i-1];
+    }
+    
+    void show(){
+        for (int i =0;i < elemcount;i++)cout << "\n"<< value[i];
+    }
+    
+    T & operator[](const int & i)const {
+        return value[i];
+    }
+    
+    T & operator++()const{ return this->value++; }
+    
+    ~pvector(){
+        delete[] value;
+    }
+    
+    void iterate(T val1, T val2){
+        for (val1; val1 != val2; val1++) {
+            cout << val2;
+        }
+    }
+};
+
+
+
+
+
+int main() {
+
+    // example code for pvec , the equivalent is possible for list
+    pvector<int> vec;
+    
+    vec.pushback(1);
+    vec.pushback(3);
+    vec.pushback(5);
+    vec.pushback(8);
+    
+    vec.iterate(vec[0], vec[3]);
+
+}
